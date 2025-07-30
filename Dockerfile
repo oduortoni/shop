@@ -18,6 +18,9 @@ WORKDIR /var/www/html
 # Copy Laravel project
 COPY . .
 
+# install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
