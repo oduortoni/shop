@@ -30,8 +30,8 @@ WORKDIR /var/www/html
 # Copy composer files first for better layer caching
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+# Install PHP dependencies (including dev dependencies for Faker)
+RUN composer install --optimize-autoloader --no-scripts
 
 # Copy package.json and package-lock.json for better layer caching
 COPY package*.json ./
