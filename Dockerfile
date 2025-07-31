@@ -45,11 +45,15 @@ COPY . .
 # Build frontend assets
 RUN npm run build
 
+# Ensure Vite manifest exists and has correct permissions
+RUN if [ -f public/build/manifest.json ]; then chmod 644 public/build/manifest.json; fi
+
 # Create necessary directories and set permissions
 RUN mkdir -p database storage/logs storage/framework/{cache,sessions,views} bootstrap/cache \
     && touch database/database.sqlite \
-    && chown -R www-data:www-data storage bootstrap/cache database \
-    && chmod -R 775 storage bootstrap/cache database
+    && chown -R www-data:www-data storage bootstrap/cache database public/build \
+    && chmod -R 775 storage bootstrap/cache database \
+    && chmod -R 755 public/build
 
 # Set Laravel environment variables
 ENV DB_CONNECTION=sqlite
