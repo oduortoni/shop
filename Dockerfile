@@ -118,10 +118,15 @@ php artisan config:cache\n\
 # Clear any existing route cache and test routes before caching\n\
 php artisan route:clear\n\
 echo "Testing route registration..."\n\
-php artisan route:list | head -10 || echo "Route listing failed"\n\
+php artisan route:list | grep -E "(login|register|GET|POST)" | head -10 || echo "Route listing failed"\n\
 \n\
-# Cache routes only if they load successfully\n\
-php artisan route:cache || echo "Route caching failed, continuing without cache"\n\
+# Test if auth routes are loaded\n\
+if php artisan route:list | grep -q "login"; then\n\
+    echo "Auth routes found, caching routes..."\n\
+    php artisan route:cache\n\
+else\n\
+    echo "Auth routes not found, skipping route cache"\n\
+fi\n\
 php artisan view:cache\n\
 \n\
 # Start Apache\n\
