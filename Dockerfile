@@ -114,7 +114,14 @@ fi\n\
 \n\
 # Cache Laravel configuration\n\
 php artisan config:cache\n\
-php artisan route:cache\n\
+\n\
+# Clear any existing route cache and test routes before caching\n\
+php artisan route:clear\n\
+echo "Testing route registration..."\n\
+php artisan route:list | head -10 || echo "Route listing failed"\n\
+\n\
+# Cache routes only if they load successfully\n\
+php artisan route:cache || echo "Route caching failed, continuing without cache"\n\
 php artisan view:cache\n\
 \n\
 # Start Apache\n\
