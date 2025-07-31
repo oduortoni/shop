@@ -68,6 +68,8 @@ Route::get('/test-login', function () {
         'message' => 'Test route works',
         'login_route_exists' => \Illuminate\Support\Facades\Route::has('login'),
         'register_route_exists' => \Illuminate\Support\Facades\Route::has('register'),
+        'login_url' => \Illuminate\Support\Facades\Route::has('login') ? route('login') : 'Route not found',
+        'register_url' => \Illuminate\Support\Facades\Route::has('register') ? route('register') : 'Route not found',
         'auth_routes' => collect(\Illuminate\Support\Facades\Route::getRoutes())
             ->filter(function($route) {
                 return str_contains($route->uri(), 'login') || str_contains($route->uri(), 'register');
@@ -80,6 +82,23 @@ Route::get('/test-login', function () {
                 ];
             })
             ->values()
+    ]);
+});
+
+// Simple test route that should work with Inertia
+Route::get('/test-inertia', function () {
+    return Inertia::render('welcome');
+})->name('test.inertia');
+
+// Test Ziggy route generation
+Route::get('/test-ziggy', function () {
+    $ziggy = new \Tighten\Ziggy\Ziggy();
+    return response()->json([
+        'ziggy_routes' => $ziggy->toArray(),
+        'has_login_in_ziggy' => isset($ziggy->toArray()['routes']['login']),
+        'has_register_in_ziggy' => isset($ziggy->toArray()['routes']['register']),
+        'login_route_details' => $ziggy->toArray()['routes']['login'] ?? 'Not found',
+        'register_route_details' => $ziggy->toArray()['routes']['register'] ?? 'Not found',
     ]);
 });
 
