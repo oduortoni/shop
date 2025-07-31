@@ -31,27 +31,31 @@ WORKDIR /var/www/html
 # Copy composer files first for better layer caching
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies (including dev dependencies for Faker)
-RUN composer install --optimize-autoloader --no-scripts
+# Install PHP dependencies (production only, Faker is now in main dependencies)
+RUN composer install --optimize-autoloader --no-dev --no-scripts
 
 # Copy package.json and package-lock.json for better layer caching
 COPY package*.json ./
 
-# Install Node dependencies
-RUN npm ci --only=production
+# Install Node dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy the rest of the application
 COPY . .
 
-# Build frontend assets (client-side first, then SSR to separate directory)
-RUN npm run build
-RUN npm run build:ssr
+# Copy environment file
+RUN cp .env.example .env
 
-# Ensure Vite manifest exists and has correct permissions
-RUN if [ -f public/build/manifest.json ]; then chmod 644 public/build/manifest.json; fi
+# Build frontend assets (client-side only for production)
+RUN npm run build
+
+# Verify build was successful and set permissions
+RUN ls -la public/build/ && \
+    if [ ! -f public/build/manifest.json ]; then echo "ERROR: Vite manifest not found!" && exit 1; fi && \
+    chmod 644 public/build/manifest.json
 
 # Create necessary directories and set permissions
-RUN mkdir -p database storage/logs storage/framework/{cache,sessions,views} bootstrap/cache \
+RUN mkdir -p database storage/app storage/logs storage/framework/{cache,sessions,views} bootstrap/cache \
     && touch database/database.sqlite \
     && chown -R www-data:www-data storage bootstrap/cache database public/build \
     && chmod -R 775 storage bootstrap/cache database \
@@ -64,6 +68,7 @@ ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV APP_URL=https://shop-s7f7.onrender.com
 ENV ASSET_URL=https://shop-s7f7.onrender.com
+ENV INERTIA_SSR_ENABLED=false
 
 # Copy custom Apache configuration if it exists
 COPY ./render.apache.conf /etc/apache2/sites-available/000-default.conf
@@ -78,6 +83,16 @@ echo "Listen $PORT" > /etc/apache2/ports.conf\n\
 \n\
 # Update VirtualHost to use the actual port number\n\
 sed -i "s/\${PORT}/$PORT/g" /etc/apache2/sites-available/000-default.conf\n\
+\n\
+# Debug: Check if manifest exists\n\
+echo "Checking Vite manifest..."\n\
+ls -la public/build/\n\
+\n\
+# Generate app key if not set\n\
+if [ -z "$APP_KEY" ]; then\n\
+    echo "Generating application key..."\n\
+    php artisan key:generate --force\n\
+fi\n\
 \n\
 # Cache Laravel configuration\n\
 php artisan config:cache\n\
