@@ -43,8 +43,9 @@ RUN npm ci --only=production
 # Copy the rest of the application
 COPY . .
 
-# Build frontend assets (including SSR)
-RUN npm run build && npm run build:ssr
+# Build frontend assets (client-side first, then SSR to separate directory)
+RUN npm run build
+RUN npm run build:ssr
 
 # Ensure Vite manifest exists and has correct permissions
 RUN if [ -f public/build/manifest.json ]; then chmod 644 public/build/manifest.json; fi
