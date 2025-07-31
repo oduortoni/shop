@@ -31,8 +31,8 @@ WORKDIR /var/www/html
 # Copy composer files first for better layer caching
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies (production only, Faker is now in main dependencies)
-RUN composer install --optimize-autoloader --no-dev --no-scripts
+# Install PHP dependencies (including dev dependencies for build)
+RUN composer install --no-scripts --no-interaction
 
 # Copy package.json and package-lock.json for better layer caching
 COPY package*.json ./
@@ -53,6 +53,10 @@ RUN npm run build
 RUN ls -la public/build/ && \
     if [ ! -f public/build/manifest.json ]; then echo "ERROR: Vite manifest not found!" && exit 1; fi && \
     chmod 644 public/build/manifest.json
+
+# Remove dev dependencies to reduce image size
+RUN composer install --no-dev --no-scripts --no-interaction && \
+    npm prune --production
 
 # Create necessary directories and set permissions
 RUN mkdir -p database storage/app storage/logs storage/framework/{cache,sessions,views} bootstrap/cache \
