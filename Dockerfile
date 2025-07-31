@@ -46,13 +46,27 @@ COPY . .
 # Copy environment file
 RUN cp .env.example .env
 
+# Set Node.js environment for build
+ENV NODE_ENV=production
+ENV VITE_APP_NAME="Laravel"
+
 # Build frontend assets (client-side only for production)
 RUN npm run build
 
 # Verify build was successful and set permissions
-RUN ls -la public/build/ && \
-    if [ ! -f public/build/manifest.json ]; then echo "ERROR: Vite manifest not found!" && exit 1; fi && \
-    chmod 644 public/build/manifest.json
+RUN if [ -f public/build/manifest.json ]; then \
+        echo "Manifest found at public/build/manifest.json"; \
+        chmod 644 public/build/manifest.json; \
+    elif [ -f public/build/.vite/manifest.json ]; then \
+        echo "Manifest found at public/build/.vite/manifest.json, moving to expected location"; \
+        mv public/build/.vite/manifest.json public/build/manifest.json; \
+        chmod 644 public/build/manifest.json; \
+    else \
+        echo "ERROR: Vite manifest not found!"; \
+        echo "Contents of public/build directory:"; \
+        find public/build -type f | head -20; \
+        exit 1; \
+    fi
 
 # Remove dev dependencies to reduce image size
 RUN composer install --no-dev --no-scripts --no-interaction && \
