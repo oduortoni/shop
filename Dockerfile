@@ -115,19 +115,18 @@ fi\n\
 # Cache Laravel configuration\n\
 php artisan config:cache\n\
 \n\
-# Clear any existing route cache and test routes before caching\n\
+# Clear any existing caches\n\
 php artisan route:clear\n\
-echo "Testing route registration..."\n\
-php artisan route:list | grep -E "(login|register|GET|POST)" | head -10 || echo "Route listing failed"\n\
+php artisan view:clear\n\
 \n\
-# Test if auth routes are loaded\n\
-if php artisan route:list | grep -q "login"; then\n\
-    echo "Auth routes found, caching routes..."\n\
-    php artisan route:cache\n\
-else\n\
-    echo "Auth routes not found, skipping route cache"\n\
-fi\n\
+# Test route registration\n\
+echo "Testing route registration..."\n\
+php artisan route:list | head -5 || echo "Route listing failed"\n\
+\n\
+# Cache views but skip route caching for now\n\
 php artisan view:cache\n\
+\n\
+echo "Startup complete, routes should be available"\n\
 \n\
 # Start Apache\n\
 exec apache2-foreground' > /usr/local/bin/entrypoint.sh \
