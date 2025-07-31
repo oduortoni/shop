@@ -1,8 +1,9 @@
 # Base image with PHP and Apache
 FROM php:8.3-apache
 
-# Enable Apache rewrite module
-RUN a2enmod rewrite
+# Enable Apache rewrite module and set ServerName
+RUN a2enmod rewrite \
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -42,8 +43,8 @@ RUN npm ci --only=production
 # Copy the rest of the application
 COPY . .
 
-# Build frontend assets
-RUN npm run build
+# Build frontend assets (including SSR)
+RUN npm run build && npm run build:ssr
 
 # Ensure Vite manifest exists and has correct permissions
 RUN if [ -f public/build/manifest.json ]; then chmod 644 public/build/manifest.json; fi
@@ -60,6 +61,8 @@ ENV DB_CONNECTION=sqlite
 ENV DB_DATABASE=/var/www/html/database/database.sqlite
 ENV APP_ENV=production
 ENV APP_DEBUG=false
+ENV APP_URL=https://shop-s7f7.onrender.com
+ENV ASSET_URL=https://shop-s7f7.onrender.com
 
 # Copy custom Apache configuration if it exists
 COPY ./render.apache.conf /etc/apache2/sites-available/000-default.conf
